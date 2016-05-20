@@ -1,0 +1,49 @@
+From d05210be86c64b19533254e1d363220e1830a9aa Mon Sep 17 00:00:00 2001
+From: Wan Zongshun <Vincent.Wan@amd.com>
+Date: Fri, 22 Jan 2016 14:07:28 -0500
+Subject: [PATCH V3 9/9] iommu/amd: Set AMD iommu callbacks for amba bus
+
+AMD Uart DMA belongs to ACPI HID type device, and its driver
+is basing on AMBA Bus, need also IOMMU support.
+
+This patch is just to set the AMD iommu callbacks for amba bus.
+
+Signed-off-by: Wan Zongshun <Vincent.Wan@amd.com>
+---
+ drivers/iommu/amd_iommu.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
+index 713e7ea..c430c10 100644
+--- a/drivers/iommu/amd_iommu.c
++++ b/drivers/iommu/amd_iommu.c
+@@ -20,6 +20,7 @@
+ #include <linux/ratelimit.h>
+ #include <linux/pci.h>
+ #include <linux/acpi.h>
++#include <linux/amba/bus.h>
+ #include <linux/pci-ats.h>
+ #include <linux/bitmap.h>
+ #include <linux/slab.h>
+@@ -2969,7 +2970,17 @@ static struct dma_map_ops amd_iommu_dma_ops = {
+ 
+ int __init amd_iommu_init_api(void)
+ {
+-	return bus_set_iommu(&pci_bus_type, &amd_iommu_ops);
++	int err = 0;
++
++	err = bus_set_iommu(&pci_bus_type, &amd_iommu_ops);
++	if (err)
++		return err;
++#ifdef CONFIG_ARM_AMBA
++	err = bus_set_iommu(&amba_bustype, &amd_iommu_ops);
++	if (err)
++		return err;
++#endif
++	return 0;
+ }
+ 
+ int __init amd_iommu_init_dma_ops(void)
+-- 
+1.9.1
+

@@ -1,0 +1,45 @@
+From d05210be86c64b19533254e1d363220e1830a9aa Mon Sep 17 00:00:00 2001
+From: Wan Zongshun <Vincent.Wan@amd.com>
+Date: Fri, 1 Apr 2016 08:55:43 -0400
+Subject: [PATCH V3 0/9] iommu/amd: enable ACPI hardware ID device support
+
+There are some devices indentified using ACPI HID format in AMD chip.
+This patch series enable iommu support for those ACPI HID device, 
+since the existing AMD iommu only supports PCI bus based device.
+
+The latest public version of AMD IOMMU specification that describes
+the support for IVHD type 40h and ACPI HID IVHD device type, 
+implemented by this patch series, is available here:
+
+http://support.amd.com/TechDocs/48882_IOMMU.pdf
+
+The V2 added two new patches: patch 5 and patch 8 according to Joerg's
+comments, there is a little modification in patch 6 to distinguish pci
+and none pci.
+
+The V3 added the fix for the booting issue Joerg experienced on the CZ
+platform due to the IOMMU performance counter init code.
+
+Suravee Suthikulpanit (4):
+  iommu/amd: Adding Extended Feature Register check for PC support
+  iommu/amd: Modify ivhd_header structure to support type 11h and 40h
+  iommu/amd: Use the most comprehensive IVHD type that the driver can
+    support
+  iommu/amd: Introduces ivrs_acpihid kernel parameter
+
+Wan Zongshun (5):
+  iommu/amd: Add new map for storing IVHD dev entry type HID
+  iommu/amd: Make call-sites of get_device_id aware of its return value
+  iommu/amd: Add iommu support for ACPI HID devices
+  iommu/amd: Manage iommu_group for ACPI HID devices
+  iommu/amd: Set AMD iommu callbacks for amba bus
+
+ Documentation/kernel-parameters.txt |   7 +
+ drivers/iommu/amd_iommu.c           | 167 +++++++++++++++---
+ drivers/iommu/amd_iommu_init.c      | 329 +++++++++++++++++++++++++++++++-----
+ drivers/iommu/amd_iommu_types.h     |  14 ++
+ 4 files changed, 457 insertions(+), 60 deletions(-)
+
+-- 
+1.9.1
+
