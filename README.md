@@ -21,5 +21,9 @@ I think I can help you. email:mcuos.com@gmail.com
 
 About those patches:
 
-patches-for-ACPIHID-devices -- Those patches are to support ACPI HID device using iommu.
+patches-for-ACPIHID-devices -- 
+
+Those patches are to support ACPI HID device using iommu.
+The current AMD has two device need those patches supporting, one is uart, the other is eMMC5.0.
+But for eMMC-4.5.1, since it is basing on PCI bus, so no need this patch series.
 
