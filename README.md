@@ -1,5 +1,7 @@
 # amd_iommu_v1_v2
 
+You maybe want to know:
+
 (1)Currently AMD IOMMU hardware spec is here:
 
 http://support.amd.com/TechDocs/48882_IOMMU.pdf
@@ -17,4 +19,7 @@ Suravee is also handling iommu currently.
 (3) I am in china, if you have some question for AMD iommu driver
 I think I can help you. email:mcuos.com@gmail.com
 
+About those patches:
+
+patches-for-ACPIHID-devices -- Those patches are to support ACPI HID device using iommu.
 
