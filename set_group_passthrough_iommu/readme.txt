@@ -30,3 +30,17 @@ issue related to iommu, not just do workaround by using my patches.
 
 So this patch, just for debug stage.
 
+for example:
+
+Since AMD eMMC has ADMA2 capability with 64bit addressable, so we can set eMMC DMA to passthrough
+iommu, do it step by step:
+
+1. lspci to check devid of eMMC
+00:14.7 SD Host controller: Advanced Micro Devices, Inc. [AMD] FCH SD Flash Controller (rev 01)
+2. apoly my this patch.
+3. set devid (0x14 << 3) to passthrough_deviceid
+
+passthrough_deviceid = 160;
+
+4. build, and you will make eMMC controller bypass IOMMU, and eliminate the iommu translation layer,
+that technically optimize the eMMC performance.
