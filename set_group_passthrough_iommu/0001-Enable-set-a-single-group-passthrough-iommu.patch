@@ -1,0 +1,59 @@
+From bd576a1dac64cb9e9c481e14029ee957288ba85f Mon Sep 17 00:00:00 2001
+From: Wan Zongshun <Vincent.Wan@amd.com>
+Date: Sat, 21 May 2016 14:51:52 -0400
+Subject: [PATCH] Enable set a single group passthrough iommu
+
+This patch can set a single group to passthrough
+iommu by set:
+
+passthrough_deviceid = devid
+
+The devid is you want to set to passthrough iommu.
+
+Note: this is a group granularity set, no single
+device, that is to say, you only can set one group
+to passthrough iommu, not single device.
+
+Signed-off-by: Wan Zongshun <Vincent.Wan@amd.com>
+---
+ drivers/iommu/amd_iommu.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
+index 5efadad..9ec2fb2 100644
+--- a/drivers/iommu/amd_iommu.c
++++ b/drivers/iommu/amd_iommu.c
+@@ -79,6 +79,9 @@ LIST_HEAD(hpet_map);
+  */
+ static const struct iommu_ops amd_iommu_ops;
+ 
++#define NO_DEVICE_PT  -1
++static int passthrough_deviceid = NO_DEVICE_PT;
++
+ static ATOMIC_NOTIFIER_HEAD(ppr_notifier);
+ int amd_iommu_max_glx_val = -1;
+ 
+@@ -2403,7 +2406,7 @@ static int amd_iommu_add_device(struct device *dev)
+ 
+ 	BUG_ON(!dev_data);
+ 
+-	if (iommu_pass_through || dev_data->iommu_v2)
++	if (iommu_pass_through || dev_data->iommu_v2 || (passthrough_deviceid && (1 << 3)) == devid)
+ 		iommu_request_dm_for_dev(dev);
+ 
+ 	/* Domains are initialized for this device - have a look what we ended up with */
+@@ -2933,6 +2936,11 @@ int __init amd_iommu_init_api(void)
+ int __init amd_iommu_init_dma_ops(void)
+ {
+ 	swiotlb        = iommu_pass_through ? 1 : 0;
++
++	if (passthrough_deviceid != NO_DEVICE_PT) {
++		swiotlb = 1;
++	}
++
+ 	iommu_detected = 1;
+ 
+ 	/*
+-- 
+1.9.1
+
