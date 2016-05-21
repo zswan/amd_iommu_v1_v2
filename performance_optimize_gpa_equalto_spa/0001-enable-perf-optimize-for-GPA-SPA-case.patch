@@ -1,0 +1,65 @@
+From 1d41bda3970551fe3171192df8808d3edc61def9 Mon Sep 17 00:00:00 2001
+From: Wan Zongshun <Vincent.Wan@amd.com>
+Date: Sat, 21 May 2016 18:04:01 -0400
+Subject: [PATCH] enable perf optimize for GPA==SPA case
+
+AMD iommu provide one optimize method for GPA==SPA.
+we just enable it, but it has risk for virt guestOS.
+
+Signed-off-by: Wan Zongshun <Vincent.Wan@amd.com>
+---
+ drivers/iommu/amd_iommu.c       | 17 +++++++++++++++--
+ drivers/iommu/amd_iommu_types.h |  1 +
+ 2 files changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
+index 9ec2fb2..a1a916e 100644
+--- a/drivers/iommu/amd_iommu.c
++++ b/drivers/iommu/amd_iommu.c
+@@ -2376,6 +2376,18 @@ static void detach_device(struct device *dev)
+ 	dev_data->ats.enabled = false;
+ }
+ 
++/*
++ * This function enables performance optimize for GPA==SPA case.
++ * To use it in virtualization is dangerous, since this only used
++ * for GPA==SPA case.
++ */
++static void amd_iommu_perf_opt_enable(struct amd_iommu *iommu)
++{
++	int val;
++	val = readl(iommu->mmio_base + MMIO_PERF_OPT_OFFSET);
++	writel(val | (1 << 13), iommu->mmio_base + MMIO_PERF_OPT_OFFSET);
++}
++
+ static int amd_iommu_add_device(struct device *dev)
+ {
+ 	struct iommu_dev_data *dev_data;
+@@ -2411,9 +2423,10 @@ static int amd_iommu_add_device(struct device *dev)
+ 
+ 	/* Domains are initialized for this device - have a look what we ended up with */
+ 	domain = iommu_get_domain_for_dev(dev);
+-	if (domain->type == IOMMU_DOMAIN_IDENTITY)
++	if (domain->type == IOMMU_DOMAIN_IDENTITY) {
+ 		dev_data->passthrough = true;
+-	else
++		amd_iommu_perf_opt_enable(iommu);
++	} else
+ 		dev->archdata.dma_ops = &amd_iommu_dma_ops;
+ 
+ out:
+diff --git a/drivers/iommu/amd_iommu_types.h b/drivers/iommu/amd_iommu_types.h
+index 9d32b20..8e29ff9 100644
+--- a/drivers/iommu/amd_iommu_types.h
++++ b/drivers/iommu/amd_iommu_types.h
+@@ -69,6 +69,7 @@
+ #define MMIO_EXCL_LIMIT_OFFSET  0x0028
+ #define MMIO_EXT_FEATURES	0x0030
+ #define MMIO_PPR_LOG_OFFSET	0x0038
++#define MMIO_PERF_OPT_OFFSET	0x016c
+ #define MMIO_CMD_HEAD_OFFSET	0x2000
+ #define MMIO_CMD_TAIL_OFFSET	0x2008
+ #define MMIO_EVT_HEAD_OFFSET	0x2010
+-- 
+1.9.1
+
