@@ -1,7 +1,7 @@
-From 2775511e8e18693a657124f08121d8135a5c1cfb Mon Sep 17 00:00:00 2001
+From 180bb7f3500db8699d29c56f33ea4e37fc83dd66 Mon Sep 17 00:00:00 2001
 From: Wan Zongshun <Vincent.Wan@amd.com>
-Date: Tue, 10 May 2016 11:59:35 -0400
-Subject: [PATCH] iommu/amd: Add proper error check in two functions
+Date: Thu, 16 Jun 2016 07:38:48 -0400
+Subject: [PATCH v2] iommu/amd: Add proper error check in two functions
 
 This patch is to do the following:
 
@@ -15,15 +15,20 @@ characters.
 
 Signed-off-by: Wan Zongshun <Vincent.Wan@amd.com>
 ---
- drivers/iommu/amd_iommu.c      | 12 ++++--------
+Changes from v1:
+
+Don't fail the iommu_init_device() function when the iommu_device_link returned
+an error,just print a warning message.
+---
+ drivers/iommu/amd_iommu.c      | 11 +++++------
  drivers/iommu/amd_iommu_init.c |  2 ++
- 2 files changed, 6 insertions(+), 8 deletions(-)
+ 2 files changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
-index 547cdd4..232a3b9 100644
+index 634f636..dbdcaeb 100644
 --- a/drivers/iommu/amd_iommu.c
 +++ b/drivers/iommu/amd_iommu.c
-@@ -414,6 +414,7 @@ out:
+@@ -476,6 +476,7 @@ out:
  static int iommu_init_device(struct device *dev)
  {
  	struct iommu_dev_data *dev_data;
@@ -31,9 +36,9 @@ index 547cdd4..232a3b9 100644
  	int devid;
  
  	if (dev->archdata.iommu)
-@@ -427,19 +428,14 @@ static int iommu_init_device(struct device *dev)
- 	if (!dev_data)
- 		return -ENOMEM;
+@@ -491,17 +492,15 @@ static int iommu_init_device(struct device *dev)
+ 
+ 	dev_data->alias = get_alias(dev);
  
 -	if (dev_is_pci(dev) && pci_iommuv2_capable(to_pci_dev(dev))) {
 -		struct amd_iommu *iommu;
@@ -48,12 +53,11 @@ index 547cdd4..232a3b9 100644
  
 -	iommu_device_link(amd_iommu_rlookup_table[dev_data->devid]->iommu_dev,
 -			  dev);
--
--	return 0;
-+	return iommu_device_link(iommu->iommu_dev, dev);
- }
++	if (iommu_device_link(iommu->iommu_dev, dev))
++		dev_warn(dev, "Creating iommu device link failed in sysfs.\n");
  
- static void iommu_ignore_device(struct device *dev)
+ 	return 0;
+ }
 diff --git a/drivers/iommu/amd_iommu_init.c b/drivers/iommu/amd_iommu_init.c
 index 9e00341..73fa986 100644
 --- a/drivers/iommu/amd_iommu_init.c
